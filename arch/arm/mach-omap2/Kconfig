@@ -453,6 +453,12 @@ config MACH_OMAP_BLAZE
 	select OMAP_REBOOT_REASON
 	select OMAP_RAM_CONSOLE
 
+config DEVICE_FRONT
+  bool "Enable build for U9500"
+  default n
+  help
+    Enable build for U9500
+
 config MACH_OMAP4_PANDA
 	bool "OMAP4 Panda Board"
 	default n
