@@ -193,7 +193,7 @@ static void cpufreq_interactive_timer(unsigned long data)
 			pcpu->lpspeed_count = 0;
 		}
 	} else {
-		new_freq = pcpu->policy->cur * cpu_load / 100;
+		new_freq = pcpu->policy->max * cpu_load / 100;
 		pcpu->lpspeed_count = 0;
 	}
 
