@@ -67,6 +67,8 @@ struct hdmi_codec_data {
 	struct omap_dss_device *dssdev;
 	struct notifier_block notifier;
 	struct hdmi_params params;
+	struct delayed_work delayed_work;
+	struct workqueue_struct *workqueue;
 	int active;
 } hdmi_data;
 
@@ -80,6 +82,7 @@ static int hdmi_audio_set_configuration(struct hdmi_codec_data *priv)
 	int err, n, cts, channel_alloc;
 	enum hdmi_core_audio_sample_freq sample_freq;
 	u32 pclk = omapdss_hdmi_get_pixel_clock();
+	int audio_transfer_sample_rate = priv->params.sample_freq;
 
 	switch (priv->params.format) {
 	case SNDRV_PCM_FORMAT_S16_LE:
@@ -94,6 +97,9 @@ static int hdmi_audio_set_configuration(struct hdmi_codec_data *priv)
 		audio_format->sample_size = HDMI_AUDIO_SAMPLE_16BITS;
 		audio_format->justification = HDMI_AUDIO_JUSTIFY_LEFT;
 		audio_dma->transfer_size = 0x10;
+		audio_format->type = HDMI_AUDIO_TYPE_LPCM;
+		core_cfg->i2s_cfg.vbit = HDMI_AUDIO_I2S_VBIT_FOR_PCM;
+		core_cfg->i2s_cfg.csbit1 = HDMI_AUDIO_I2S_CSBIT1_FOR_PCM;
 		break;
 	case SNDRV_PCM_FORMAT_S24_LE:
 		core_cfg->i2s_cfg.word_max_length =
@@ -107,6 +113,26 @@ static int hdmi_audio_set_configuration(struct hdmi_codec_data *priv)
 		audio_format->justification = HDMI_AUDIO_JUSTIFY_RIGHT;
 		core_cfg->i2s_cfg.justification = HDMI_AUDIO_JUSTIFY_RIGHT;
 		audio_dma->transfer_size = 0x20;
+		audio_format->type = HDMI_AUDIO_TYPE_LPCM;
+		core_cfg->i2s_cfg.vbit = HDMI_AUDIO_I2S_VBIT_FOR_PCM;
+		core_cfg->i2s_cfg.csbit1 = HDMI_AUDIO_I2S_CSBIT1_FOR_PCM;
+		break;
+	case SNDRV_PCM_FORMAT_SPECIAL_AC3:
+	case SNDRV_PCM_FORMAT_SPECIAL_DDP:
+		core_cfg->i2s_cfg.word_max_length =
+			HDMI_AUDIO_I2S_MAX_WORD_20BITS;
+		core_cfg->i2s_cfg.word_length =
+					HDMI_AUDIO_I2S_CHST_WORD_16_BITS;
+		core_cfg->i2s_cfg.in_length_bits =
+			HDMI_AUDIO_I2S_INPUT_LENGTH_16;
+		core_cfg->i2s_cfg.justification = HDMI_AUDIO_JUSTIFY_LEFT;
+		audio_format->samples_per_word = HDMI_AUDIO_ONEWORD_TWOSAMPLES;
+		audio_format->sample_size = HDMI_AUDIO_SAMPLE_16BITS;
+		audio_format->justification = HDMI_AUDIO_JUSTIFY_LEFT;
+		audio_dma->transfer_size = 0x10;
+		audio_format->type = HDMI_AUDIO_TYPE_LPCM;
+		core_cfg->i2s_cfg.vbit = HDMI_AUDIO_I2S_VBIT_FOR_COMPRESSED;
+		core_cfg->i2s_cfg.csbit1 = HDMI_AUDIO_I2S_CSBIT1_FOR_COMPRESSED;
 		break;
 	default:
 		return -EINVAL;
@@ -127,13 +153,17 @@ static int hdmi_audio_set_configuration(struct hdmi_codec_data *priv)
 		return -EINVAL;
 	}
 
+    /*this is specially for transfering samples which is encoded with eac3*/
+    if(priv->params.format == SNDRV_PCM_FORMAT_SPECIAL_DDP)
+		audio_transfer_sample_rate = 192000;
+	
 	err = hdmi_ti_4xxx_config_audio_acr(&priv->ip_data,
-			priv->params.sample_freq, &n, &cts, pclk);
+			audio_transfer_sample_rate, &n, &cts, pclk);
 	if (err < 0)
 		return err;
 
+
 	/* Audio wrapper config */
-	audio_format->type = HDMI_AUDIO_TYPE_LPCM;
 	audio_format->sample_order = HDMI_AUDIO_SAMPLE_LEFT_FIRST;
 	/* Disable start/stop signals of IEC 60958 blocks */
 	audio_format->en_sig_blk_strt_end = HDMI_AUDIO_BLOCK_SIG_STARTEND_OFF;
@@ -153,7 +183,7 @@ static int hdmi_audio_set_configuration(struct hdmi_codec_data *priv)
 	core_cfg->i2s_cfg.cbit_order = false;
 	/* Serial data and word select should change on sck rising edge */
 	core_cfg->i2s_cfg.sck_edge_mode = HDMI_AUDIO_I2S_SCK_EDGE_RISING;
-	core_cfg->i2s_cfg.vbit = HDMI_AUDIO_I2S_VBIT_FOR_PCM;
+
 	/* Set I2S word select polarity */
 	core_cfg->i2s_cfg.ws_polarity = HDMI_AUDIO_I2S_WS_POLARITY_LOW_IS_LEFT;
 	core_cfg->i2s_cfg.direction = HDMI_AUDIO_I2S_MSB_SHIFTED_FIRST;
@@ -185,6 +215,7 @@ static int hdmi_audio_set_configuration(struct hdmi_codec_data *priv)
 	core_cfg->en_parallel_aud_input = true;
 
 	/* Number of channels */
+    aud_if_cfg->db1_channel_count = priv->params.channels_nr; 
 
 	switch (priv->params.channels_nr) {
 	case 2:
@@ -197,13 +228,21 @@ static int hdmi_audio_set_configuration(struct hdmi_codec_data *priv)
 		break;
 	case 6:
 		core_cfg->layout = HDMI_AUDIO_LAYOUT_8CH;
-		channel_alloc = 0xB;
+		channel_alloc = 0x13;
 		audio_format->stereo_channels = HDMI_AUDIO_STEREO_FOURCHANNELS;
 		audio_format->active_chnnls_msk = 0x3f;
 		/* Enable all of the four available serial data channels */
 		core_cfg->i2s_cfg.active_sds = HDMI_AUDIO_I2S_SD0_EN |
 				HDMI_AUDIO_I2S_SD1_EN | HDMI_AUDIO_I2S_SD2_EN |
 				HDMI_AUDIO_I2S_SD3_EN;
+        /*  
+         * Overwrite info frame with channel count = 7 (8-1) and  
+         * CA = 0x13 in order to ensure that sample_present bits  
+         * configuration matches the number of channels (2 channels  
+         * are padded with zeroes) that are sent to fullfil  
+         * multichannel certification tests.  
+         */  
+		aud_if_cfg->db1_channel_count = 8; 
 		break;
 	case 8:
 		core_cfg->layout = HDMI_AUDIO_LAYOUT_8CH;
@@ -228,7 +267,6 @@ static int hdmi_audio_set_configuration(struct hdmi_codec_data *priv)
 	 * info frame audio see doc CEA861-D page 74
 	 */
 	aud_if_cfg->db1_coding_type = HDMI_INFOFRAME_AUDIO_DB1CT_FROM_STREAM;
-	aud_if_cfg->db1_channel_count = priv->params.channels_nr;
 	aud_if_cfg->db2_sample_freq = HDMI_INFOFRAME_AUDIO_DB2SF_FROM_STREAM;
 	aud_if_cfg->db2_sample_size = HDMI_INFOFRAME_AUDIO_DB2SS_FROM_STREAM;
 	aud_if_cfg->db4_channel_alloc = channel_alloc;
@@ -247,17 +285,27 @@ int hdmi_audio_notifier_callback(struct notifier_block *nb,
 
 	if (state == OMAP_DSS_DISPLAY_ACTIVE) {
 		/* this happens just after hdmi_power_on */
-		if (hdmi_data.active)
-			hdmi_ti_4xxx_audio_enable(&hdmi_data.ip_data, 0);
+        //if (hdmi_data.active)
+	    //hdmi_ti_4xxx_wp_audio_enable(&hdmi_data.ip_data, 0);
 		hdmi_audio_set_configuration(&hdmi_data);
 		if (hdmi_data.active) {
 			omap_hwmod_set_slave_idlemode(hdmi_data.oh,
 							HWMOD_IDLEMODE_NO);
-			hdmi_ti_4xxx_audio_enable(&hdmi_data.ip_data, 1);
+			hdmi_ti_4xxx_wp_audio_enable(&hdmi_data.ip_data, 1);
+			queue_delayed_work(hdmi_data.workqueue,
+			        &hdmi_data.delayed_work,
+			        msecs_to_jiffies(1));
 
 		}
+	}else {
+	    cancel_delayed_work(&hdmi_data.delayed_work);
 	}
 	return 0;
+}
+
+static void hdmi_audio_work(struct work_struct *work)
+{
+    hdmi_ti_4xxx_transfer_enable(&hdmi_data.ip_data, 1);
 }
 
 int hdmi_audio_match(struct omap_dss_device *dssdev, void *arg)
@@ -297,14 +345,19 @@ static int hdmi_audio_trigger(struct snd_pcm_substream *substream, int cmd,
 		 */
 		omap_hwmod_set_slave_idlemode(priv->oh,
 			HWMOD_IDLEMODE_NO);
-		hdmi_ti_4xxx_audio_enable(&priv->ip_data, 1);
+		hdmi_ti_4xxx_wp_audio_enable(&priv->ip_data, 1);
+		queue_delayed_work(priv->workqueue,
+			        &priv->delayed_work,
+			        msecs_to_jiffies(1));
 		priv->active = 1;
 		break;
 	case SNDRV_PCM_TRIGGER_STOP:
 	case SNDRV_PCM_TRIGGER_SUSPEND:
 	case SNDRV_PCM_TRIGGER_PAUSE_PUSH:
+	    cancel_delayed_work(&hdmi_data.delayed_work);
 		priv->active = 0;
-		hdmi_ti_4xxx_audio_enable(&priv->ip_data, 0);
+		hdmi_ti_4xxx_transfer_enable(&priv->ip_data, 0);
+		hdmi_ti_4xxx_wp_audio_enable(&priv->ip_data, 0);
 		/*
 		 * switch back to smart-idle & wakeup capable
 		 * after audio activity stops
@@ -379,6 +432,10 @@ static int hdmi_probe(struct snd_soc_codec *codec)
 	blocking_notifier_chain_register(&hdmi_data.dssdev->state_notifiers,
 			&hdmi_data.notifier);
 
+    hdmi_data.workqueue = create_singlethread_workqueue("hdmi-codec");  
+
+    INIT_DELAYED_WORK(&hdmi_data.delayed_work, hdmi_audio_work);  
+
 	return 0;
 
 dssdev_err:
@@ -419,7 +476,9 @@ static struct snd_soc_dai_driver hdmi_codec_dai_drv = {
 			.rates = SNDRV_PCM_RATE_32000 |
 				SNDRV_PCM_RATE_44100 | SNDRV_PCM_RATE_48000,
 			.formats = SNDRV_PCM_FMTBIT_S16_LE |
-				SNDRV_PCM_FMTBIT_S24_LE,
+				SNDRV_PCM_FMTBIT_S24_LE |
+                SNDRV_PCM_FMTBIT_SPECIAL_AC3|
+                SNDRV_PCM_FMTBIT_SPECIAL_DDP,
 		},
 		.ops = &hdmi_audio_codec_ops,
 };

@@ -146,6 +146,14 @@ static struct pcm_format_data pcm_formats[(INT)SNDRV_PCM_FORMAT_LAST+1] = {
 	[SNDRV_PCM_FORMAT_GSM] = {
 		.le = -1, .signd = -1,
 	},
+	[SNDRV_PCM_FORMAT_SPECIAL_AC3] = {
+		.width = 16, .phys = 16, .le = 1, .signd = 1,
+		.silence = {},
+	},
+	[SNDRV_PCM_FORMAT_SPECIAL_DDP] = {
+		.width = 16, .phys = 16, .le = 1, .signd = 1,
+		.silence = {},
+	},
 	[SNDRV_PCM_FORMAT_SPECIAL] = {
 		.le = -1, .signd = -1,
 	},

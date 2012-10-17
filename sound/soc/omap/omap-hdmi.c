@@ -66,6 +66,8 @@ static int omap_hdmi_dai_hw_params(struct snd_pcm_substream *substream,
 
 	switch (params_format(params)) {
 	case SNDRV_PCM_FORMAT_S16_LE:
+	case SNDRV_PCM_FORMAT_SPECIAL_AC3:
+	case SNDRV_PCM_FORMAT_SPECIAL_DDP:
 		omap_hdmi_dai_dma_params.packet_size = 16;
 		break;
 	case SNDRV_PCM_FORMAT_S24_LE:
