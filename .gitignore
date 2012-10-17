@@ -55,6 +55,7 @@ modules.builtin
 # Generated include files
 #
 include/config
+include/linux/version.h
 include/generated
 
 # stgit generated dirs
