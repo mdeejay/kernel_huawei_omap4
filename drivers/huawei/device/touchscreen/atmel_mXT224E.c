@@ -879,10 +879,13 @@ static void msg_process_multitouch(struct atmel_ts_data *ts, uint8_t *data, uint
     {
         if (ts->id->version >= 0x10 && ts->pre_data[0] < 2)
         {
-            if(jiffies > (ts->timestamp + 20 * HZ))
+            if(Unlock_flag==1)
             {
-                confirm_calibration(ts);
+            	if(jiffies > (ts->timestamp + 20 * HZ))
+            	{
+            		confirm_calibration(ts);
 
+            	}
             }
         }
         /*
@@ -925,11 +928,12 @@ static void msg_process_multitouch(struct atmel_ts_data *ts, uint8_t *data, uint
      else if ((data[T9_MSG_STATUS] & (T9_MSG_STATUS_DETECT|T9_MSG_STATUS_PRESS)) && ts->pre_data[0] < 2 && Unlock_flag!=1)
      {
             if (ts->finger_count == 1 && ts->pre_data[0] &&
-                 (idx == 0 && ((abs(ts->finger_data[idx].y - ts->pre_data[idx + 2]) > 50)
-                  || (abs(ts->finger_data[idx].x - ts->pre_data[idx + 1]) > 50))))
+                 (idx == 0 && ((abs(ts->finger_data[idx].y - ts->pre_data[idx + 2]) > 120)
+                  || (abs(ts->finger_data[idx].x - ts->pre_data[idx + 1]) > 120))))
             {
                 Unlock_flag=1;
                 ts->calibration_confirm=2;
+                ts->timestamp = jiffies;
             }
       }
 }

@@ -2448,7 +2448,7 @@ static struct omap_dss_device sdp4430_hdmi_device = {
             .dispc_fclk_src    = OMAP_DSS_CLK_SRC_FCK,
         },
         .hdmi    = {
-            .regn    = 15,
+            .regn    = 10,
             .regm2    = 1,
         },
     },
@@ -3029,6 +3029,9 @@ static int blaze_notifier_call(struct notifier_block *this,
 		v |= OMAP4430_RST_GLOBAL_COLD_SW_MASK;
 	}else if (!strcmp(cmd, "charger_poweroff_reboot")) {
 		strcpy(sar_base + 0xA0C, "charger_poweroff_reboot");
+		v |= OMAP4430_RST_GLOBAL_COLD_SW_MASK;
+	}else if (!strcmp(cmd, "resize")) {
+		strcpy(sar_base + 0xA0C, "resize");
 		v |= OMAP4430_RST_GLOBAL_COLD_SW_MASK;
 	}else {
             strcpy(sar_base + 0xA0C, "huawei_reboot");

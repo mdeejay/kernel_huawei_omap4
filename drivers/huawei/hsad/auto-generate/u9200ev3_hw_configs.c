@@ -4,10 +4,11 @@
 config_pair  u9200ev3_hw_configs_common [] = {
     {"audio/enhance_type", (const unsigned int)(unsigned int*)"dts", E_CONFIG_DATA_TYPE_STRING }, 
     {"audio/vibrator_driver", (const unsigned int)(unsigned int*)"AUX3", E_CONFIG_DATA_TYPE_STRING }, 
-    {"gas_gauge/charge_current", (unsigned int)1500, E_CONFIG_DATA_TYPE_INT }, 
+    {"gas_gauge/capacity", (unsigned int)2600, E_CONFIG_DATA_TYPE_INT }, 
+    {"gas_gauge/charge_current", (unsigned int)1000, E_CONFIG_DATA_TYPE_INT }, 
     {"gas_gauge/charge_voltage", (unsigned int)4300, E_CONFIG_DATA_TYPE_INT }, 
     {"gas_gauge/firmware_name", (const unsigned int)(unsigned int*)"BQ27510_GUANGYU_2600", E_CONFIG_DATA_TYPE_STRING }, 
-    {"gas_gauge/version", (unsigned int)0x33000a0, E_CONFIG_DATA_TYPE_INT }, 
+    {"gas_gauge/version", (unsigned int)0x32500a4, E_CONFIG_DATA_TYPE_INT }, 
     {"lcd/index", (unsigned int)123, E_CONFIG_DATA_TYPE_INT }, 
     {"lcd/init_index", (unsigned int)789, E_CONFIG_DATA_TYPE_INT }, 
     {"lcd/name", (const unsigned int)(unsigned int*)"spanel", E_CONFIG_DATA_TYPE_STRING }, 

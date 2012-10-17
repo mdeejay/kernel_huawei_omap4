@@ -6,6 +6,7 @@ config_pair  frontvn1p3_hw_configs_common [] = {
     {"audio/enhance_type", (const unsigned int)(unsigned int*)"dts", E_CONFIG_DATA_TYPE_STRING }, 
     {"audio/vibrator_driver", (const unsigned int)(unsigned int*)"AUX3", E_CONFIG_DATA_TYPE_STRING }, 
     {"dss_pwrdm/dss_pwrdm_en", (unsigned int)0, E_CONFIG_DATA_TYPE_BOOL }, 
+    {"gas_gauge/capacity", (unsigned int)1800, E_CONFIG_DATA_TYPE_INT }, 
     {"gas_gauge/charge_current", (unsigned int)1000, E_CONFIG_DATA_TYPE_INT }, 
     {"gas_gauge/charge_voltage", (unsigned int)4340, E_CONFIG_DATA_TYPE_INT }, 
     {"gas_gauge/firmware_name", (const unsigned int)(unsigned int*)"BQ27510_LG_1800", E_CONFIG_DATA_TYPE_STRING }, 
@@ -27,7 +28,7 @@ config_pair  frontvn1p3_hw_configs_common [] = {
     {"test_version/if_test_version", (const unsigned int)(unsigned int*)"false", E_CONFIG_DATA_TYPE_STRING }, 
     {"tklight/touchkeylight", (unsigned int)1, E_CONFIG_DATA_TYPE_BOOL }, 
     {"touchscreen/front", (unsigned int)0, E_CONFIG_DATA_TYPE_BOOL }, 
-    {"touchscreen/size", (const unsigned int)(unsigned int*)"720P", E_CONFIG_DATA_TYPE_STRING }, 
+    {"touchscreen/size", (const unsigned int)(unsigned int*)"720A", E_CONFIG_DATA_TYPE_STRING }, 
     {"usbeye/trim_value", (unsigned int)0x37, E_CONFIG_DATA_TYPE_INT }, 
     {"xmd/xmd_ready_gpio_enable", (unsigned int)1, E_CONFIG_DATA_TYPE_INT }, 
     {0, 0, 0}

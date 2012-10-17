@@ -597,10 +597,7 @@ static ssize_t apds990x_store_enable_ps_sensor(struct device *dev,
 			apds990x_set_enable(client,0); /* Power Off */
 			apds990x_set_atime(client, 0xfa); /* 27.2ms */
 			apds990x_set_ptime(client, 0xff); /* 2.72ms */
-
-                     if( board_id == 2 )
-			        apds990x_set_ppcount(client, 7); /* 5-pulse */
-			else apds990x_set_ppcount(client, 5); 
+			apds990x_set_ppcount(client, 5); /* 5-pulse */
                      //apds990x_set_control(client, 0x20); /* 100mA, IR-diode, 1X PGAIN, 1X AGAIN */
                      apds990x_set_control(client, 0x20); /* 100mA, IR-diode, 1X PGAIN, 1X AGAIN */
 
@@ -707,9 +704,7 @@ static ssize_t apds990x_store_enable_als_sensor(struct device *dev,
 			if (data->enable_ps_sensor) {
 				apds990x_set_atime(client, 0xfa);
 				apds990x_set_ptime(client, 0xff); /* 2.72ms */
-                     if( board_id == 2 )
-			       apds990x_set_ppcount(client, 7); /* 5-pulse */
-			else apds990x_set_ppcount(client, 5); 
+			apds990x_set_ppcount(client, 5); /* 5-pulse */
                      apds990x_set_enable(client, 0x27);	 /* if prox sensor was activated previously */
 			}
 			else {
@@ -738,9 +733,8 @@ static ssize_t apds990x_store_enable_als_sensor(struct device *dev,
 			apds990x_set_enable(client,0); /* Power Off */
 			apds990x_set_atime(client, 0xfa);  /* 27.2ms */
 			apds990x_set_ptime(client, 0xff); /* 2.72ms */
-                        if( board_id == 2 )
-			    apds990x_set_ppcount(client, 7); /* 5-pulse */
-			else apds990x_set_ppcount(client, 5); 
+
+			apds990x_set_ppcount(client, 5); /* 5-pulse */
 
                      apds990x_set_control(client, 0x20); /* 100mA, IR-diode, 1X PGAIN, 16X AGAIN */
 
@@ -885,9 +879,7 @@ static int apds990x_init_client(struct i2c_client *client)
 	apds990x_set_atime(client, 0xfa);
 	apds990x_set_ptime(client, 0xFF);	// 2.72ms Prox integration time
 	apds990x_set_wtime(client, 0xFF);	// 2.72ms Wait time
-        if( board_id == 2 )
-	    apds990x_set_ppcount(client, 7); /* 5-pulse */
-	else apds990x_set_ppcount(client, 5); 
+	apds990x_set_ppcount(client, 5);        //* 5-pulse *
 
 	//apds990x_set_ppcount(client, 0x08);	// 8-Pulse for proximity
 	apds990x_set_config(client, 0);		// no long wait
@@ -929,7 +921,7 @@ static int __devinit apds990x_probe(struct i2c_client *client,
     }
     else if( board_id == 2 )
     {
-        apds_990x_pwindows_value = 300;
+        apds_990x_pwindows_value = 200;
         apds_990x_pwave_value = 250;
      }
     else

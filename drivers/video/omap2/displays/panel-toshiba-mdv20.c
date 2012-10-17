@@ -175,6 +175,8 @@ struct panel_config {
 
 	struct omap_video_timings timings;
 	//struct omap_dsi_video_timings dsi_video_timings;
+	u32 width_in_um;
+	u32 height_in_um;
 
 	struct {
 		unsigned int sleep_in;
@@ -215,6 +217,8 @@ static struct panel_config panel_configs[] = {
 		     .vsw = 1,
 		     .vbp = 6,
 		     },
+         .width_in_um = 57000,
+         .height_in_um = 101000,
 	/*
 	 .dsi_video_timings = {
 		     .hsa = 1,
@@ -850,8 +854,8 @@ static int _set_cabc(struct omap_dss_device *dssdev, enum tft_cabc cabc)
 			goto err;
 
 			buf[0] = 0xbe;
-			buf[1] = cabc_user_parameter[1]?cabc_user_parameter[1]:0xff;	/* Dont touch backlight level */
-			buf[2] = cabc_user_parameter[2]?cabc_user_parameter[2]:0xf;
+			buf[1] = cabc_user_parameter[1];	/* Dont touch backlight level */
+			buf[2] = cabc_user_parameter[2];
 			buf[3] = 0x2;
 			buf[4] = 0x2;
 			buf[5] = 0x4;
@@ -907,8 +911,8 @@ static int _set_cabc(struct omap_dss_device *dssdev, enum tft_cabc cabc)
 			goto err;
 
 			buf[0] = 0xbe;
-			buf[1] = cabc_user_parameter[1]?cabc_user_parameter[1]:0xff;	/* Dont touch backlight level */
-			buf[2] = cabc_user_parameter[2]?cabc_user_parameter[2]:0xf;
+			buf[1] = cabc_user_parameter[1];	/* Dont touch backlight level */
+			buf[2] = cabc_user_parameter[2];
 			buf[3] = 0x0;
 			buf[4] = 0x18;
 			buf[5] = 0x4;
@@ -1277,6 +1281,8 @@ static int mdv20_probe(struct omap_dss_device *dssdev)
 
 	dssdev->panel.config = OMAP_DSS_LCD_TFT;
 	dssdev->panel.timings = panel_config->timings;
+	dssdev->panel.width_in_um = panel_config->width_in_um;
+	dssdev->panel.height_in_um = panel_config->height_in_um;
 	dssdev->panel.data_type = DSI_DT_PXLSTREAM_24BPP_PACKED;
 	dssdev->ctrl.pixel_size = 24;
 	dssdev->panel.acbi = 0;
@@ -1865,6 +1871,7 @@ R63306:
 	
 	return 0;
 
+
 R63308:
     buf[0] = 0xbb;
     buf[1] = 0x0d;	/* color enhancement on, cabc on, hard coded */
@@ -1872,6 +1879,21 @@ R63308:
     r = dsi_vc_mcs_write(md->dssdev,CMD_VC_CHANNEL, buf,2);
     if (r)
         goto err;
+
+    buf[0] = 0xc6;
+    buf[1] = 0x14;
+    buf[2] = 0x00;
+    buf[3] = 0x08;
+    buf[4] = 0x71;
+    buf[5] = 0x00;
+    buf[6] = 0x00;
+    buf[7] = 0x00;
+    buf[8] = 0x00;
+    buf[9] = 0x00;
+    buf[10] = 0x00;
+    r = dsi_vc_mcs_write(md->dssdev, CMD_VC_CHANNEL, buf,11);
+    if (r)
+	goto err;
 
     buf[0] = 0xe2;
     buf[1] = 0x01;

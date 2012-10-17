@@ -437,11 +437,11 @@ static struct twl4030_platform_data front_twl6030_twldata = {
 	.vaux2		= &front_twl6030_vaux2,
 	.vcore2		= &front_twl6030_vcore2,
 	.v1v29		= &front_twl6030_v1v29,
-	.vaux3		= &front_twl6030_vaux3,
-	.vdac		= &front_twl6030_vdac,
 	.vmmc		= &front_twl6030_vmmc,
-	.vpp		= &front_twl6030_vpp,
+	.vdac		= &front_twl6030_vdac,
+	.vaux3		= &front_twl6030_vaux3,
 	.vusb		= &front_twl6030_vusb,
+	.vpp		= &front_twl6030_vpp,
 };
 
 
@@ -464,8 +464,8 @@ static struct power_voltage_table front_config_powervalue[] ={
 	{"PMU_VPP"	,1800000},
 	{"COMPASS_VDD_SENSOR"	,2600000},
 	{"GYROSCOPE_VDD_SENSOR"	,2600000},
-	{"LCD_LCD_VCI"	,2850000},
 	{"ADI_ACCELEROMETER_VDD_SENSOR"	,2600000},
+	{"LCD_LCD_VCI"	,2850000},
 	{"MOTOR_MOTOR"	,3000000},
     {"" , 0},
 };

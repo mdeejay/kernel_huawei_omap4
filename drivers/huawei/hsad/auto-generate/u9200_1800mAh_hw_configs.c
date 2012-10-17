@@ -4,6 +4,7 @@
 config_pair  u9200_1800mAh_hw_configs_common [] = {
     {"audio/enhance_type", (const unsigned int)(unsigned int*)"dts", E_CONFIG_DATA_TYPE_STRING }, 
     {"audio/vibrator_driver", (const unsigned int)(unsigned int*)"AUX3", E_CONFIG_DATA_TYPE_STRING }, 
+    {"gas_gauge/capacity", (unsigned int)1800, E_CONFIG_DATA_TYPE_INT }, 
     {"gas_gauge/charge_current", (unsigned int)1000, E_CONFIG_DATA_TYPE_INT }, 
     {"gas_gauge/charge_voltage", (unsigned int)4340, E_CONFIG_DATA_TYPE_INT }, 
     {"gas_gauge/firmware_name", (const unsigned int)(unsigned int*)"VIVA_LG_1800", E_CONFIG_DATA_TYPE_STRING }, 

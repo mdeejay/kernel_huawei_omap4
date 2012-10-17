@@ -209,6 +209,8 @@ struct panel_config {
 
 	struct omap_video_timings timings;
 
+	u32 width_in_um;
+	u32 height_in_um;
 	struct {
 		unsigned int sleep_in;
 		unsigned int sleep_out;
@@ -253,6 +255,8 @@ static struct panel_config panel_configs[] = {
 			.x_res		= 540,
 			.y_res		= 960,
 		},
+		.width_in_um = 57000,
+                .height_in_um = 101000,
 		.sleep		= {
 			.sleep_in	= 5,
 			.sleep_out	= 5,
@@ -1626,6 +1630,8 @@ static int sp_probe(struct omap_dss_device *dssdev)
 
 	dssdev->panel.config = OMAP_DSS_LCD_TFT;
 	dssdev->panel.timings = panel_config->timings;
+	dssdev->panel.width_in_um = panel_config->width_in_um;
+	dssdev->panel.height_in_um = panel_config->height_in_um;
 	dssdev->ctrl.pixel_size = 24; 
 
 	pd = kzalloc(sizeof(*pd), GFP_KERNEL);
